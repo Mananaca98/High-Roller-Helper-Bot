@@ -1,14 +1,25 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
-import json
+from dotenv import load_dotenv
+import os
 import logging
+
+# Carrega as variáveis do .env
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 class BotCommands:
-    def __init__(self, application, config_path='config.json'):
+    def __init__(self, application):
         self.application = application
-        self.config_path = config_path
+        # Carrega as configurações do .env para um dicionário em memória
+        self.config = {
+            "telegram_token": os.getenv("TELEGRAM_TOKEN"),
+            "cassino": os.getenv("CASSINO", "Placard"),
+            "auto_mode": os.getenv("AUTO_MODE", "false").lower() == "true",
+            "min_confidence": int(os.getenv("MIN_CONFIDENCE", "75")),
+            "admin_chat_ids": os.getenv("ADMIN_CHAT_IDS", "").split(",")
+        }
         self._register_commands()
 
     def _register_commands(self):
@@ -34,12 +45,11 @@ class BotCommands:
         )
 
     def _load_config(self):
-        with open(self.config_path) as f:
-            return json.load(f)
+        return self.config
 
     def _save_config(self, config):
-        with open(self.config_path, 'w') as f:
-            json.dump(config, f)
+        # Atualiza o dicionário de configuração em memória
+        self.config = config
 
     def cmd_start(self, update: Update, context: CallbackContext):
         update.message.reply_text(

@@ -2,7 +2,7 @@
 from telegram.ext import Application
 from commands import BotCommands
 
-class BigCatBot:
+class HighRollerHelperBot:
     def __init__(self, token: str):
         # Criação da instância da aplicação, não do updater
         self.application = Application.builder().token(token).build()

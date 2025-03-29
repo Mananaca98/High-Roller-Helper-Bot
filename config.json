@@ -1,0 +1,7 @@
+{
+  "telegram_token": "7715439100:AAEuXUA_7wK4snk-X-dUfC2QbNpkkB8vQ8I",
+  "cassino": "placard",
+  "auto_mode": false,
+  "min_confidence": 75,
+  "admin_chat_ids": [7715439100]
+}
