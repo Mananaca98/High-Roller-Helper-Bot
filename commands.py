@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium_stealth import stealth
 import random
 import time
+from prediction.prediction_engine import LiveDataScraper  # Replace 'your_module' with the actual module where LiveDataScraper is defined
 
 
 # Carrega as variáveis do .env
@@ -27,6 +28,7 @@ class BotCommands:
         }
         self._register_commands()
 
+    
     def _register_commands(self):
         commands = [
             ('start', self.cmd_start),
@@ -47,7 +49,10 @@ class BotCommands:
         
         self.application.add_handler(
             CallbackQueryHandler(self.cassino_callback, pattern='^cassino_')
-        )
+
+     )
+        
+
 
     def _load_config(self):
         return self.config
@@ -76,21 +81,22 @@ class BotCommands:
             "/alertas - 🔔 Configurar alertas",
             "/config - ⚙️ Ajustes avançados"
         ]
-        update.message.reply_text("\n".join(help_text), parse_mode='Markdown')
+        update.message.reply_text("\n".join(help_text), parse_mode='Markdown')  
+    def _get_live_odds(self, casino: str):  
+        """WebSocket scraper for real-time data"""  
+        return LiveDataScraper(casino).get_odds()  
+ 
+def cmd_previsao(self, update: Update, context: CallbackContext):  
+    odds = self._get_live_odds(self.config["cassino"])  
+    prediction = LSTM_Predictor.predict(odds)  
+    update.message.reply_text(  
+        f"🎯 *PREVISÃO EM TEMPO REAL* 🎯\n"  
+        f"Multiplicador: {prediction['multiplier']:.2f}x\n"  
+        f"Confiança: {prediction['confidence']}%\n"  
+        f"⏳ Válido por 12 segundos",  
+        parse_mode="Markdown"  
+    )
 
-    def cmd_previsao(self, update: Update, context: CallbackContext):
-        try:
-            config = self._load_config()
-            update.message.reply_text(
-                "🔮 *PRÓXIMA PREVISÃO* 🔮\n"
-                f"Multiplicador: 2.45x\n"
-                f"Confiança: 82%\n"
-                f"Casa atual: {config.get('cassino', 'Placard')}",
-                parse_mode='Markdown'
-            )
-        except Exception as e:
-            logger.error(f"Erro previsao: {str(e)}")
-            update.message.reply_text("⚠️ Erro ao gerar previsão")
 
     def cmd_cassino(self, update: Update, context: CallbackContext):
         keyboard = [
@@ -194,9 +200,13 @@ class BotCommands:
                 y_offset = random.randint(-15, 15)
                 action.move_by_offset(x_offset, y_offset).perform()
                 time.sleep(random.uniform(0.1, 0.3))
+
+        
             
             # Final click
             element.click()
+
+            
             
         except Exception as e:
             logging.error(f"Interaction failed: {str(e)}")
