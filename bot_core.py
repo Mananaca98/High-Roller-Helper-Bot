@@ -1,16 +1,32 @@
-#from telegram import Bot
 from telegram.ext import Application
 from commands import BotCommands
+from selenium_stealth import stealth
+import logging
 
 class HighRollerHelperBot:
     def __init__(self, token: str):
-        # Criação da instância da aplicação, não do updater
         self.application = Application.builder().token(token).build()
-        
-        # Passar a instância da aplicação para o BotCommands
         self.commands = BotCommands(self.application)
-    
-    def run(self):
-        # Inicia a aplicação
-        self.application.run_polling()
+        self._configure_stealth()
 
+    def _configure_stealth(self):
+        """Initialize stealth configurations"""
+        self.stealth_params = {
+            "languages": ["pt-PT", "pt"],
+            "vendor": "Google Inc.",
+            "platform": "Win32",
+            "webgl_vendor": "Intel Inc.",
+            "renderer": "Intel Iris OpenGL Engine",
+        }
+
+    def run(self):
+        """Start the bot with stealth enhancements"""
+        try:
+            self.application.run_polling(
+                poll_interval=1.5,
+                timeout=30,
+                drop_pending_updates=True
+            )
+        except Exception as e:
+            logging.error(f"Polling error: {str(e)}")
+            raise

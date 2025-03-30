@@ -3,6 +3,11 @@ from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from dotenv import load_dotenv
 import os
 import logging
+from selenium.webdriver.chrome.options import Options
+from selenium_stealth import stealth
+import random
+import time
+
 
 # Carrega as variáveis do .env
 load_dotenv()
@@ -141,3 +146,58 @@ class BotCommands:
 
     def cmd_config(self, update: Update, context: CallbackContext):
         update.message.reply_text("⚙️ *Configurações Avançadas:* \nAjustes para personalizar a experiência do bot", parse_mode='Markdown')
+
+    def _create_stealth_driver(self):
+        """Create a stealth-enhanced WebDriver"""
+        options = Options()
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument(f"--user-agent={os.getenv('USER_AGENT_OVERRIDE')}")
+        
+        # Configure proxy if available
+        if proxies := os.getenv("PROXY_LIST"):
+            proxy = random.choice(proxies.split(','))
+            options.add_argument(f"--proxy-server={proxy.strip()}")
+        
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()),
+            options=options
+        )
+        
+        # Apply stealth configurations
+        stealth(
+            driver,
+            languages=["pt-PT", "pt"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+        )
+        
+        return driver
+
+    def _human_like_interaction(self, element):
+        """Simulate human-like interaction patterns"""
+        try:
+            # Random movement before click
+            action = webdriver.ActionChains(self.driver)
+            
+            # Random scroll pattern
+            scroll_amount = random.randint(100, 400)
+            self.driver.execute_script(f"window.scrollBy(0, {scroll_amount})")
+            
+            # Random delay
+            time.sleep(random.uniform(0.5, 2.5))
+            
+            # Random mouse movement
+            for _ in range(random.randint(2, 5)):
+                x_offset = random.randint(-15, 15)
+                y_offset = random.randint(-15, 15)
+                action.move_by_offset(x_offset, y_offset).perform()
+                time.sleep(random.uniform(0.1, 0.3))
+            
+            # Final click
+            element.click()
+            
+        except Exception as e:
+            logging.error(f"Interaction failed: {str(e)}")
+            raise

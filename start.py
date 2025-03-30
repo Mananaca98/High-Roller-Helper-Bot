@@ -1,18 +1,28 @@
-from bot_core import HighRollerHelperBot  # Certifique-se de que bot_core utiliza o token de .env também
+from bot_core import HighRollerHelperBot
 from dotenv import load_dotenv
 import os
+import logging
+
+# Configure logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
 load_dotenv()
 
 def main():
     token = os.getenv("TELEGRAM_TOKEN")
     if not token:
-        print("Erro: TELEGRAM_TOKEN não está definido no .env")
+        logging.error("TELEGRAM_TOKEN not found in .env")
         return
     
-    bot = HighRollerHelperBot(token=token)
-    print("🐆 High Roller Helper Bot iniciado...")
-    bot.run()
+    try:
+        bot = HighRollerHelperBot(token=token)
+        logging.info("🐆 High Roller Helper Bot starting...")
+        bot.run()
+    except Exception as e:
+        logging.critical(f"Bot crashed: {str(e)}")
 
 if __name__ == '__main__':
     main()
