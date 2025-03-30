@@ -1,0 +1,7 @@
+{
+  "last_updated": "2025-03-30T07:00:00Z",
+  "odds": [
+    { "game": "roulette", "value": 2.1 },
+    { "game": "blackjack", "value": 1.8 }
+  ]
+}

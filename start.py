@@ -2,43 +2,53 @@ from bot_core import HighRollerHelperBot
 from dotenv import load_dotenv
 import os
 import logging
-from prediction.prediction_engine import LiveDataScraper  # New correct path
-import numpy as np
+import sys
 
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.INFO,
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('bot_runtime.log')
+    ]
 )
 
-# Carregar variáveis de ambiente do arquivo .env
-load_dotenv()
-
-def main():
-    # Pega o token do ambiente
+def initialize_services():
+    load_dotenv()
+    
     token = os.getenv("TELEGRAM_TOKEN")
     if not token:
         logging.error("TELEGRAM_TOKEN not found in .env")
-        return
+        sys.exit(1)
 
-    # Obtém os parâmetros de stealth_level e country (padrão para "MZ")
-    stealth_level = int(os.getenv("STEALTH_LEVEL", 0))  # Default para 0
-    country = os.getenv("COUNTRY", "MZ")  # Default para "MZ"
-
+    # SAFE CONFIG PARSING
     try:
-        # Inicializa o bot com os parâmetros necessários
-        bot = HighRollerHelperBot(token=token, stealth_level=stealth_level, country=country)
-        logging.info("🐆 High Roller Helper Bot starting...")
-
-        # Inicia o scraper de dados em tempo real
-        scraper = LiveDataScraper(country=country)
-        scraper.start_websocket_listener()
-
-        # Executa o bot
-        bot.run()
+        stealth_level = int(os.getenv("STEALTH_LEVEL", "3").split()[0])  # Takes first number only
+        country = os.getenv("COUNTRY", "MZ").upper().strip()
     except Exception as e:
-        logging.critical(f"Bot crashed: {str(e)}")
+        logging.error(f"Config parse error: {e}")
+        stealth_level = 3  # Default fallback
+        country = "MZ"
+    
+    return token, stealth_level, country
 
-# Certifique-se de que a função main seja chamada corretamente
+def main():
+    try:
+        token, stealth_level, country = initialize_services()
+        
+        bot = HighRollerHelperBot(
+            token=token,
+            stealth_level=stealth_level,
+            country=country
+        )
+        
+        logging.info(f"🐆 Starting High Roller Helper Bot (Stealth Level: {stealth_level}, Country: {country})")
+        bot.run()
+        
+    except Exception as e:
+        logging.critical(f"Fatal error: {str(e)}")
+        sys.exit(1)
+
 if __name__ == '__main__':
     main()
