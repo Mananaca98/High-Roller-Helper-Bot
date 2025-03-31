@@ -1,54 +1,26 @@
-from bot_core import HighRollerHelperBot
+from telegram.ext import Application
+from commands import AviatorCommands
 from dotenv import load_dotenv
 import os
 import logging
-import sys
 
-# Configure logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO,
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('bot_runtime.log')
-    ]
-)
-
-def initialize_services():
-    load_dotenv()
-    
-    token = os.getenv("TELEGRAM_TOKEN")
-    if not token:
-        logging.error("TELEGRAM_TOKEN not found in .env")
-        sys.exit(1)
-
-    # SAFE CONFIG PARSING
-    try:
-        stealth_level = int(os.getenv("STEALTH_LEVEL", "3").split()[0])  # Takes first number only
-        country = os.getenv("COUNTRY", "MZ").upper().strip()
-    except Exception as e:
-        logging.error(f"Config parse error: {e}")
-        stealth_level = 3  # Default fallback
-        country = "MZ"
-    
-    return token, stealth_level, country
+load_dotenv()
 
 def main():
-    try:
-        token, stealth_level, country = initialize_services()
-        
-        bot = HighRollerHelperBot(
-            token=token,
-            stealth_level=stealth_level,
-            country=country
-        )
-        
-        logging.info(f"🐆 Starting High Roller Helper Bot (Stealth Level: {stealth_level}, Country: {country})")
-        bot.run()
-        
-    except Exception as e:
-        logging.critical(f"Fatal error: {str(e)}")
-        sys.exit(1)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('earth_defense.log'),
+            logging.StreamHandler()
+        ]
+    )
+
+    app = Application.builder().token(os.getenv("TELEGRAM_TOKEN")).build()
+    AviatorCommands(app)
+    
+    logging.info("🔥 EARTH PROTECTION PROTOCOL INITIATED 🔥")
+    app.run_polling()
 
 if __name__ == '__main__':
     main()

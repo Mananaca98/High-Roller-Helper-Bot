@@ -1,54 +1,39 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    CallbackContext,
-    CallbackQueryHandler,
-    MessageHandler,
-    filters
-)
+from telegram import Update
+from telegram.ext import ContextTypes, CommandHandler
+import asyncio
 import logging
-import random
+from bot_core import AviatorBot
 
 logger = logging.getLogger(__name__)
 
-class BotCommands:
-    def __init__(self, application: Application):
-        self.application = application
+class AviatorCommands:
+    def __init__(self, app):
+        self.bot = AviatorBot()
+        self.app = app
         self._register_handlers()
 
     def _register_handlers(self):
-        """All handlers must be async"""
-        self.application.add_handler(CommandHandler("start", self.start))
-        self.application.add_handler(CommandHandler("previsao", self.previsao))
-        self.application.add_handler(CommandHandler("cassino", self.cassino))
-        self.application.add_error_handler(self.error_handler)
+        self.app.add_handler(CommandHandler("start", self.start))
+        self.app.add_handler(CommandHandler("predict", self.predict))
 
-    async def start(self, update: Update, context: CallbackContext):
-        """MUST be async"""
-        await update.message.reply_text("🐅 Bot Ativado! Digite /previsao")
+    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("🌍 EARTH DEFENSE SYSTEM ACTIVATED 🌍")
 
-    async def previsao(self, update: Update, context: CallbackContext):
-        """Async prediction handler"""
-        try:
-            prediction = {
-                "multiplier": round(random.uniform(1.5, 3.0), 2),
-                "confidence": random.randint(85, 95)  # Force 85%+ accuracy
-            }
-            await update.message.reply_text(
-                f"🎯 Previsão: {prediction['multiplier']}x\n"
-                f"Confiança: {prediction['confidence']}%"
-            )
-        except Exception as e:
-            logger.error(f"Prediction failed: {e}")
+    async def predict(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        while True:
+            try:
+                prediction = self.bot.predict_next_round()
+                if prediction['confidence'] >= float(os.getenv("MIN_CONFIDENCE")):
+                    await self._send_alert(update, prediction)
+                await asyncio.sleep(float(os.getenv("PREDICTION_WINDOW")))
+            except Exception as e:
+                logger.error(f"PREDICTION FAILURE: {str(e)}")
 
-    async def cassino(self, update: Update, context: CallbackContext):
-        """Async casino menu"""
-        keyboard = [[InlineKeyboardButton("🎰 Placard", callback_data='placard')]]
-        await update.message.reply_text(
-            "Selecione:",
-            reply_markup=InlineKeyboardMarkup(keyboard))
-    
-    async def error_handler(self, update: Update, context: CallbackContext):
-        """Critical error catcher"""
-        logger.error(f"Update {update} caused error {context.error}")
+    async def _send_alert(self, update: Update, data):
+        alert_msg = (
+            f"🚨 EARTH ALERT 🚨\n"
+            f"Next crash: {data['crash_point']:.2f}x\n"
+            f"Confidence: {data['confidence']:.2f}%\n"
+            f"Impact in: {os.getenv('PREDICTION_WINDOW')}s"
+        )
+        await update.message.reply_text(alert_msg)
